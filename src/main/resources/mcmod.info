@@ -1,0 +1,16 @@
+[
+{
+  "modid": "cml",
+  "name": "Cascading Meme Lag",
+  "description": "Using super-extensive, highly detailed algorithms and equations, this mod picks out memes loaded into the world in excess, just like cascading worldgen lag. These days people load so many mods, even ones with high meme density, that the memes collate until it starts to overload the world. This mod won't fix it, there's no way to fix it, but it will pick out the memes loading in excess.",
+  "version": "${version}",
+  "mcversion": "${mcversion}",
+  "url": "",
+  "updateUrl": "",
+  "authorList": ["Androsa"],
+  "credits": "The memes for allowing this to be a thing.",
+  "logoFile": "",
+  "screenshots": [],
+  "dependencies": []
+}
+]
