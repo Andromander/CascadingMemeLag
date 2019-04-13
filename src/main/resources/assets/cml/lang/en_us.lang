@@ -1,0 +1,6 @@
+#PARSE_ESCAPES
+
+cml.config.pool_size=Meme Sensitivity
+cml.config.threshold=Meme Threshold
+cml.config.time_to_check=Checker Frequency
+cml.config.meme_latent_mods=High Meme-Latent Mods
