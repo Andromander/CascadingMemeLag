@@ -1,7 +1,6 @@
 package com.androsa.cml;
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.world.World;
 import net.minecraftforge.fml.common.Loader;
 import net.minecraftforge.fml.common.Mod;
@@ -15,11 +14,13 @@ import org.apache.logging.log4j.Logger;
 
 import java.util.Random;
 
+import static com.androsa.cml.CMLConfig.*;
+
 @Mod(modid = CascadingMemeMod.MODID, name = CascadingMemeMod.NAME, version = CascadingMemeMod.VERSION, clientSideOnly = true)
 public class CascadingMemeMod {
     public static final String MODID = "cml";
     public static final String NAME = "Cascading Meme Lag";
-    public static final String VERSION = "1.1";
+    public static final String VERSION = "1.2";
     private static final Logger logger = LogManager.getLogger(MODID);
     private static int modCount;
     private static int minimumChance;
@@ -27,34 +28,48 @@ public class CascadingMemeMod {
 
     @EventHandler
     public void init(FMLInitializationEvent event) {
+        //Count out the number of mods, minus the necessities (Minecraft, Forge, FML, MCP)
         int modSize = Loader.instance().getIndexedModList().size() - 4;
         logger.debug("We have found " + modSize + " mods to count.");
-        for (String modid : CMLConfig.highLatentMeme) {
+        if (tooManyModToggle && modSize > maximumModCount) {
+            logger.fatal("CAUTION: TOO MANY MODS HAVE BEEN DETECTED. {} HAVE BEEN FOUND, BUT ONLY {} ARE ALLOWED.", modSize, maximumModCount);
+            throw new CascadingMemeException("There are too many mods loaded. Cascading Meme Lag has terminated the session. Adjust the number of allowed mods or disable this feature in the configuration file.");
+        }
+        //Check the config for modids and see if those mods are loaded. Add 5 for each modid found and loaded
+        for (String modid : highLatentMeme) {
             if (Loader.isModLoaded(modid)) {
-                logger.debug("Detected a high meme-latent mod, " + modid + ".");
+                logger.debug("Detected a high meme-latent mod, {}.", modid);
                 modCount += 5;
             }
         }
+        //Looking at you, Twilight Forest...
         if (Loader.isModLoaded("twilightforest")) {
-            modCount = modSize * 2;
-            logger.info("Twilight Forest has been identified in the list of mods available. Meme rate sare doubled.");
+            modSize *= 2;
+            logger.info("Twilight Forest has been identified in the list of mods available. Meme rates are doubled.");
         }
 
-        modCount = modSize + CMLConfig.poolSize;
-        logger.debug("The size of the randomizer is " + modCount + ".");
-
-        if (CMLConfig.threshold >= modCount) {
+        modCount = modSize + poolSize;
+        logger.debug("The size of the randomizer is {}.", modCount);
+        if (tooManyToCount && modCount > maximumMemeThreshold) {
+            logger.fatal("CAUTION: OVERABUNDANCE OF MEMES WILL OVERLOAD THE SESSION. {} HAVE BEEN FOUND, BUT THE THRESHOLD IS AT {}.", modCount, maximumMemeThreshold);
+            throw new CascadingMemeException("The size of the randomizer exceeds the recommended threshold. Cascading Meme Lag has terminated the session. Adjust the maximum threshold or disable this feature in the configuration file.");
+        }
+        //If by some chance the randomizer will never yield a result, say that the random number will be below the threshold, make our own. The chance will now be 10 below the total
+        //Otherwise, just use the exact value.
+        if (threshold >= modCount) {
             minimumChance = modCount - 10;
             logger.error("An error has occurred. Cascading Meme Lag's checker cannot work with the current Meme Threshold. Automatically adjusting the Meme Threshold...");
         } else {
-            minimumChance = CMLConfig.threshold;
-            logger.debug("Meme Threshold has been set to " + minimumChance + ".");
+            minimumChance = threshold;
         }
+        logger.debug("Meme Threshold has been set to {}.", minimumChance);
     }
 
     @Mod.EventBusSubscriber(value = Side.CLIENT)
     public static class ClientEvents {
         private static final Random random = new Random();
+        private static int randFrame = modCount;
+        private static String errorLine = "Minecraft loaded a new chunk [{},{}] in dimension {} ({}) while populating chunk [{},{}], causing cascading meme lag.";
 
         private static int getChunkCoordinate(int max) {
             return random.nextInt(max * 2) - max;
@@ -63,10 +78,7 @@ public class CascadingMemeMod {
         @SubscribeEvent
         public static void onClientTick(TickEvent.ClientTickEvent e) {
             if (e.phase != TickEvent.Phase.END) return;
-
-            int randFrame = modCount;
             World world = Minecraft.getMinecraft().world;
-            String errorLine = "Minecraft loaded a new chunk [{},{}] in dimension {} ({}) while populating chunk [{},{}], causing cascading meme lag.";
 
             if (world != null) {
                 if (tickTime == 0) {
@@ -74,20 +86,14 @@ public class CascadingMemeMod {
                         logger.warn(errorLine, getChunkCoordinate(187500), getChunkCoordinate(187500), world.provider.getDimension(), world.provider.getDimensionType().getName(), getChunkCoordinate(187500), getChunkCoordinate(187500));
                         logger.warn(randomMessage());
                     }
-                    tickTime = CMLConfig.timeToCheck;
+                    tickTime = timeToCheck;
                 }
                 --tickTime;
             }
         }
 
         static String randomMessage() {
-            int randomSize;
-
-            if (Loader.isModLoaded("twilightforest")) {
-                randomSize = 7;
-            } else {
-                randomSize = 6;
-            }
+            int randomSize = Loader.isModLoaded("twilightforest") ? 7 : 6;
 
             switch (random.nextInt(randomSize)) {
                 case 0:
