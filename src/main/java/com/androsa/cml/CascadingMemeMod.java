@@ -54,19 +54,24 @@ public class CascadingMemeMod {
 
     @Mod.EventBusSubscriber(value = Side.CLIENT)
     public static class ClientEvents {
+        private static final Random random = new Random();
+
+        private static int getChunkCoordinate(int max) {
+            return random.nextInt(max * 2) - max;
+        }
+
         @SubscribeEvent
         public static void onClientTick(TickEvent.ClientTickEvent e) {
             if (e.phase != TickEvent.Phase.END) return;
 
             int randFrame = modCount;
-            Random random = new Random();
             World world = Minecraft.getMinecraft().world;
             String errorLine = "Minecraft loaded a new chunk [{},{}] in dimension {} ({}) while populating chunk [{},{}], causing cascading meme lag.";
 
             if (world != null) {
                 if (tickTime == 0) {
                     if (random.nextInt(randFrame) > minimumChance) {
-                        logger.warn(errorLine, random.nextInt(375000) - 187500, random.nextInt(375000) - 187500, world.provider.getDimension(), world.provider.getDimensionType().getName(), random.nextInt(375000) - 187500, random.nextInt(375000) - 187500);
+                        logger.warn(errorLine, getChunkCoordinate(187500), getChunkCoordinate(187500), world.provider.getDimension(), world.provider.getDimensionType().getName(), getChunkCoordinate(187500), getChunkCoordinate(187500));
                         logger.warn(randomMessage());
                     }
                     tickTime = CMLConfig.timeToCheck;
@@ -76,13 +81,14 @@ public class CascadingMemeMod {
         }
 
         static String randomMessage() {
-            Random random = new Random();
             int randomSize;
+
             if (Loader.isModLoaded("twilightforest")) {
                 randomSize = 7;
             } else {
                 randomSize = 6;
             }
+
             switch (random.nextInt(randomSize)) {
                 case 0:
                     return "Please send help.";
